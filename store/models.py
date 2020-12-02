@@ -8,7 +8,7 @@ class Menu(models.Model):
     def __str__(self):
         return self.name
 
-    class Mete:
+    class Meta:
         db_table = 'menus'
 
 class Category(models.Model):
@@ -18,14 +18,14 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-    class Mete:
+    class Meta:
         db_table = 'categories'
 
 class MenuCategory(models.Model):
     menu     = models.ForeignKey('Menu', on_delete=models.CASCADE)
     category = models.ForeignKey('Category', on_delete=models.CASCADE)
 
-    class Mete:
+    class Meta:
         db_table = 'menu_categories'
 
 class SubCategory(models.Model):
