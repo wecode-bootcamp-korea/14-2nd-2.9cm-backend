@@ -23,8 +23,8 @@ class Order(TimeStampModel):
 class Cart(TimeStampModel):
     quantity = models.IntegerField()
     product  = models.ForeignKey('store.Product', on_delete=models.CASCADE)
-    color    = models.ForeignKey('store.Color', on_delete=models.CASCADE)
-    size     = models.ForeignKey('store.Size', on_delete=models.CASCADE)
+    color    = models.ForeignKey('store.Color', on_delete=models.SET_NULL, null=True)
+    size     = models.ForeignKey('store.Size', on_delete=models.SET_NULL, null=True)
     order    = models.ForeignKey('Order', on_delete=models.CASCADE)
 
     class Meta:

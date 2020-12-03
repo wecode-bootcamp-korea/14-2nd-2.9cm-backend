@@ -80,6 +80,7 @@ class Product(models.Model):
     market_price = models.DecimalField(max_digits=10, decimal_places=0)
     sale_price   = models.DecimalField(max_digits=10, decimal_places=0)
     description  = models.TextField()
+    thumnail_url = models.URLField(max_length=2000)
     brand        = models.ForeignKey('Brand', on_delete=models.CASCADE)
     product_type = models.ForeignKey('ProductType', on_delete=models.CASCADE)
     gender       = models.ForeignKey('Gender', on_delete=models.SET_NULL, null=True)
@@ -102,6 +103,7 @@ class Enquiry(TimeStampModel):
     content    = models.TextField()
     is_private = models.BooleanField()
     product    = models.ForeignKey('Product', on_delete=models.CASCADE)
+    parent     = models.ForeignKey('self', related_name='reply', on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'enquiries'

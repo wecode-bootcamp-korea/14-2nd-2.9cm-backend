@@ -33,10 +33,10 @@ class User(TimeStampModel):
         db_table = 'users'
 
 class UserDetail(TimeStampModel):
-    name    = models.CharField(max_length=200)
-    phone   = models.CharField(max_length=100)
-    dob     = models.DateField()
-    gender  = models.CharField(max_length=10)
+    name    = models.CharField(max_length=200, null=True)
+    phone   = models.CharField(max_length=100, null=True)
+    dob     = models.DateField(null=True)
+    gender  = models.CharField(max_length=10, null=True)
     address = models.CharField(max_length=2000, null=True)
     user    = models.ForeignKey('User', on_delete=models.CASCADE)
 
