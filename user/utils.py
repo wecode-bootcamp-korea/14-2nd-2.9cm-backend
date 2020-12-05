@@ -22,3 +22,6 @@ def login_check(func):
         return func(self, request, *args, **kwargs)
 
     return wrapper
+
+def generate_token(user):
+    return jwt.encode({'id':user.id}, SECRET_KEY, algorithm=ALGORITHM).decode('utf-8')
