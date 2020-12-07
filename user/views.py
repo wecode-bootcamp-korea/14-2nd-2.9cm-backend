@@ -9,7 +9,7 @@ from my_settings import SECRET_KEY, ALGORITHM
 from .utils      import login_check, generate_token
 from .api_urls   import NAVER_API, KAKAO_API, GOOGLE_API
 
-class UserView(View):
+class SignUpView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
@@ -30,12 +30,14 @@ class UserView(View):
 
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-            User.objects.create(
+            user = User.objects.create(
                 email    = email,
                 password = hashed_password
             )
 
-            return JsonResponse({'message': 'SUCCESS'}, status=201)
+            access_token = generate_token(user)
+
+            return JsonResponse({'message': 'SUCCESS', 'access_token': access_token}, status=201)
 
         except KeyError:
             return JsonResponse({'message': 'KEY_ERROR'}, status=400)

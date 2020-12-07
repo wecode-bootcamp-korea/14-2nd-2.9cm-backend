@@ -5,7 +5,7 @@ from django.test import TestCase, Client
 from unittest.mock import patch, MagicMock
 from .models       import User
 
-class UserTest(TestCase):
+class SignUpTest(TestCase):
 
     def setUp(self):
         User.objects.create(
@@ -16,25 +16,26 @@ class UserTest(TestCase):
     def tearDown(self):
         User.objects.all().delete()
 
-    def test_userview_post_success(self):
+    def test_user_signup_success(self):
         client = Client()
         new_user = {
             'email' : 'testcase2@gmail.com',
             'password': 'password'
         }
 
-        response = client.post('/user', json.dumps(new_user), content_type='application/json')
+        response = client.post('/user/signup', json.dumps(new_user), content_type='application/json')
 
         self.assertEqual(response.status_code, 201)
+        self.assertIn('access_token', response.json())
 
-    def test_userview_post_invalid_email(self):
+    def test_user_signup_failed_invalid_email(self):
         client = Client()
         new_user = {
             'email' : 'thisisnotemail',
             'password': 'password'
         }
 
-        response = client.post('/user', json.dumps(new_user), content_type='application/json')
+        response = client.post('/user/signup', json.dumps(new_user), content_type='application/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
@@ -43,14 +44,14 @@ class UserTest(TestCase):
             }
         )
 
-    def test_userview_post_invalid_password(self):
+    def test_user_signup_failed_invalid_password(self):
         client = Client()
         new_user = {
             'email' : 'testcase3@gmail.com',
             'password': '8char'
         }
 
-        response = client.post('/user', json.dumps(new_user), content_type='application/json')
+        response = client.post('/user/signup', json.dumps(new_user), content_type='application/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
@@ -59,14 +60,14 @@ class UserTest(TestCase):
             }
         )
 
-    def test_userview_post_duplicated_email(self):
+    def test_user_signup_failed_duplicated_email(self):
         client = Client()
         new_user = {
             'email' : 'testcase1@gmail.com',
             'password': 'password123'
         }
 
-        response = client.post('/user', json.dumps(new_user), content_type='application/json')
+        response = client.post('/user/signup', json.dumps(new_user), content_type='application/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
@@ -75,14 +76,14 @@ class UserTest(TestCase):
             }
         )
 
-    def test_userview_post_keyerror(self):
+    def test_user_signup_failed_keyerror(self):
         client = Client()
         new_user = {
             'email' : 'testcase5@gmail.com',
             'pwd': 'password123'
         }
 
-        response = client.post('/user', json.dumps(new_user), content_type='application/json')
+        response = client.post('/user/signup', json.dumps(new_user), content_type='application/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
