@@ -3,7 +3,8 @@ import json, bcrypt
 from django.test import TestCase, Client
 
 from unittest.mock import patch, MagicMock
-from .models       import User
+from .models       import User, PhoneAuth, UserDetail
+from .utils        import generate_token
 
 class SignUpTest(TestCase):
 
@@ -355,3 +356,158 @@ class GoogleLoginTest(TestCase):
         response = client.post('/user/login/google', content_type='application/json', **header)
 
         self.assertEqual(response.status_code, 400)
+
+class PhoneSMSTest(TestCase):
+
+    def setUp(self):
+        test_user = User.objects.create(
+            email = 'testuser1@gmail.com',
+            password = bcrypt.hashpw('password'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        )
+
+    def tearDown(self):
+        User.objects.all().delete()
+        PhoneAuth.objects.all().delete()
+
+    @patch('user.models.requests')
+    def test_user_phone_auth_success(self, mocked_request):
+        class SMSResponse:
+            def json(self):
+                return {
+                    "requestId" : "12345678",
+                    "requestTime": "2020-12-09T16:54:55.711",
+                    "statusCode": "202",
+                    "statusName": "success"
+                }
+
+        mocked_request.post = MagicMock(return_value = SMSResponse())
+
+        body = {
+            'phone' : '01012341234'
+        }
+
+        client = Client()
+        response = client.post('/user/sms', json.dumps(body), content_type='application/json')
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()['message'], 'SUCCESS')
+
+    @patch('user.models.requests')
+    def test_user_phone_auth_fail_api_call(self, mocked_request):
+        class SMSResponse:
+            def json(self):
+                return {
+                    "errors": "some error",
+                    "error message": "Something wrong, Do it again!"
+                }
+
+        mocked_request.post = MagicMock(return_value = SMSResponse())
+
+        body = {
+            'phone' : '01012341234'
+        }
+
+        client = Client()
+        response = client.post('/user/sms', json.dumps(body), content_type='application/json')
+
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.json()['message'], 'FAIL')
+
+    def test_user_phone_auth_fail_keyerror(self):
+        client = Client()
+
+        body = {
+            'no_phone_key' : '01011111111'
+        }
+
+        response = client.post('/user/sms', json.dumps(body), content_type='application/json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'KEY_ERROR')
+
+class UserDetailTest(TestCase):
+
+    def setUp(self):
+        test_user = User.objects.create(
+            email = 'testuser1@gmail.com',
+            password = bcrypt.hashpw('password'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        )
+        self.token = generate_token(test_user)
+
+        PhoneAuth.objects.create(
+            phone = '01012341234',
+            auth_number = 12345
+        )
+
+    def tearDown(self):
+        User.objects.all().delete()
+        UserDetail.objects.all().delete()
+        PhoneAuth.objects.all().delete()
+
+    def test_user_detail_post_success(self):
+        header = {'HTTP_Authorization' : self.token}
+
+        body = {
+            'name'        : '테스터',
+            'phone'       : '01012341234',
+            'auth_number' : 12345,
+            'dob'         : '1995-05-17',
+            'gender'      : '남'
+        }
+
+        client = Client()
+        response = client.post('/user/details', json.dumps(body), content_type='application/json', **header)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['message'], 'SUCCESS')
+
+    def test_user_detail_post_fail_phone_auth(self):
+        header = {'HTTP_Authorization' : self.token}
+
+        body = {
+            'name'        : '테스터',
+            'phone'       : '01012341234',
+            'auth_number' : 54321,
+            'dob'         : '1995-05-17',
+            'gender'      : '남'
+        }
+
+        client = Client()
+        response = client.post('/user/details', json.dumps(body), content_type='application/json', **header)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['message'], 'PHONE_AUTHENTICATION_FAILED')
+
+    def test_user_detail_post_fail_date_format(self):
+        header = {'HTTP_Authorization' : self.token}
+
+        body = {
+            'name'        : '테스터',
+            'phone'       : '01012341234',
+            'auth_number' : 12345,
+            'dob'         : '19-05-1997',
+            'gender'      : '남'
+        }
+
+        client = Client()
+        response = client.post('/user/details', json.dumps(body), content_type='application/json', **header)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'DATE_FORMAT_SHOULD_BE_YYYY-MM-DD')
+
+    def test_user_detail_post_fail_keyerror(self):
+        header = {'HTTP_Authorization' : self.token}
+
+        body = {
+            'xname'        : '테스터',
+            'xphone'       : '01012341234',
+            'xauth_number' : 12345,
+            'xdob'         : '19-05-1997',
+            'xgender'      : '남'
+        }
+
+        client = Client()
+        response = client.post('/user/details', json.dumps(body), content_type='application/json', **header)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'KEY_ERROR')

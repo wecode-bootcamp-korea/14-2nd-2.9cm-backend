@@ -1,7 +1,11 @@
+import sys, os, hmac, base64, requests, time, hashlib, json
 from pytz import timezone
 
-from django.db import models
+from django.db   import models
 from django.conf import settings
+
+from my_settings import NCP_ACCESS_KEY, NCP_SECRET_KEY, NCP_SERVICE_ID
+from .api_urls   import SMS_API, SMS_URI
 
 class TimeStampModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -66,3 +70,42 @@ class PostLike(models.Model):
 
     class Meta:
         db_table = 'post_likes'
+
+class PhoneAuth(TimeStampModel):
+    phone       = models.CharField(max_length=100)
+    auth_number = models.IntegerField()
+
+    class Meta:
+        db_table = 'phone_auths'
+
+    def make_signature(self, message):
+        SECRET_KEY = bytes(NCP_SECRET_KEY, 'UTF-8')
+
+        return base64.b64encode(hmac.new(SECRET_KEY, message, digestmod=hashlib.sha256).digest())
+
+    def send_message(self):
+        timestamp = str(int(time.time() * 1000))
+
+        message = "POST " + SMS_URI + "\n" + timestamp + "\n" + NCP_ACCESS_KEY
+        message = bytes(message, 'UTF-8')
+
+        SIGNATURE = self.make_signature(message)
+
+        headers = {
+            'Content-Type'             : 'application/json; charset=utf-8',
+            'x-ncp-apigw-timestamp'    : timestamp,
+            'x-ncp-iam-access-key'     : NCP_ACCESS_KEY,
+            'x-ncp-apigw-signature-v2' : SIGNATURE
+        }
+
+        body = {
+            "type"        : "SMS",
+            "contentType" : "COMM",
+            "from"        : "01041485117",
+            "content"     : f'[2.9cm] 인증번호 [{self.auth_number}]를 입력해주세요.',
+            "messages"    : [{ "to" : self.phone}]
+        }
+
+        result = requests.post(SMS_API, data = json.dumps(body), headers = headers).json()
+
+        return result
