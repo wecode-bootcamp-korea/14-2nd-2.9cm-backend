@@ -1,13 +1,12 @@
-import re, json, bcrypt, jwt, requests
+import re, json, bcrypt, jwt, requests, random, datetime
 
 from django.views import View
-from django.db.models import Q
 from django.http import JsonResponse
 
-from user.models import User, UserDetail
-from my_settings import SECRET_KEY, ALGORITHM
+from user.models import User, UserDetail, PhoneAuth
 from .utils      import login_check, generate_token
 from .api_urls   import NAVER_API, KAKAO_API, GOOGLE_API
+from my_settings import SECRET_KEY, ALGORITHM
 
 class SignUpView(View):
     def post(self, request):
@@ -75,8 +74,8 @@ class NaverLoginView(View):
 
         result = requests.get(
             NAVER_API,
-            headers={
-                'Authorization': '{} {}'.format(token_type, naver_token)
+            headers = {
+                'Authorization' : '{} {}'.format(token_type, naver_token)
             }
         ).json()
 
@@ -104,7 +103,7 @@ class KakaoLoginView(View):
         response = requests.get(
             KAKAO_API,
             headers = {
-                'Authorization': '{} {}'.format(token_type, kakao_token)
+                'Authorization' : '{} {}'.format(token_type, kakao_token)
             }
         ).json()
 
@@ -127,7 +126,7 @@ class GoogleLoginView(View):
         response = requests.get(
             GOOGLE_API,
             headers = {
-                'Authorization': '{} {}'.format(token_type, google_token)
+                'Authorization' : '{} {}'.format(token_type, google_token)
             }
         ).json()
 
@@ -138,3 +137,60 @@ class GoogleLoginView(View):
         access_token = generate_token(user)
 
         return JsonResponse({'message': 'SUCCESS','access_token': access_token}, status=200)
+
+class UserDetailView(View):
+    @login_check
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            user = request.user
+
+            DATE_FORMAT = "%Y-%m-%d"
+            datetime.datetime.strptime(data['dob'], DATE_FORMAT)
+
+            PhoneAuth.objects.get(phone=data['phone'], auth_number=data['auth_number'])
+
+            UserDetail.objects.update_or_create(
+                defaults = {
+                    'name'   : data['name'],
+                    'phone'  : data['phone'],
+                    'dob'    : data['dob'],
+                    'gender' : data['gender']
+                },
+                user = user
+            )
+
+            return JsonResponse({'message': 'SUCCESS'}, status=201)
+
+        except PhoneAuth.DoesNotExist:
+            return JsonResponse({'message': 'PHONE_AUTHENTICATION_FAILED'}, status=401)
+
+        except ValueError:
+            return JsonResponse({'message': 'DATE_FORMAT_SHOULD_BE_YYYY-MM-DD'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'message': 'KEY_ERROR'}, status=400)
+
+class PhoneAuthView(View):
+    def post(self, request):
+        try:
+            data        = json.loads(request.body)
+            auth_number = random.randint(10000,100000)
+
+            phone_auth, _ = PhoneAuth.objects.update_or_create(
+                defaults = {'auth_number' : auth_number},
+                phone    = data['phone']
+            )
+
+            result = phone_auth.send_message()
+
+            if not 'statusCode' in result:
+                return JsonResponse({'message': 'FAIL', 'result': result}, status=405)
+
+            if result['statusCode'] != '202':
+                return JsonResponse({'message': result['statusName']}, status=result['statusCode'])
+
+            return JsonResponse({'message': 'SUCCESS'}, status=202)
+
+        except KeyError:
+            return JsonResponse({'message': 'KEY_ERROR'}, status=400)
