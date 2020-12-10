@@ -101,4 +101,18 @@ class CartListView(View):
         except KeyError:
             return JsonResponse({'message':'INVALID_KEYS'},status=400)
 
-     
+class CartUpdateView(View):
+    @login_check
+    def delete(self,request):
+        try:
+            data = json.loads(request.body)
+            user = request.user
+            order_id = Order.objects.get(user=request.user,status_id=1).id
+            del_product = Product.objects.get(id=data['product_id']).id
+            in_cart = Cart.objects.get(product_id=del_product)
+            in_cart.delete()
+             
+            return JsonResponse({'message':'SUCCESS'},status=201)
+        
+        except Cart.DoesNotExist:
+            return JsonResponse({'message':'INVALID_PRODUCT'},status=400)
