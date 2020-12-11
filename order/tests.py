@@ -13,7 +13,6 @@ from unittest.mock import patch,MagicMock
 from my_settings import SECRET_KEY,ALGORITHM
 
 class CartListViewTest(TransactionTestCase):
-
     def setUp(self):
         self.user = User.objects.create(
             email = 'test@naver.com',
@@ -177,5 +176,4 @@ class CartListViewTest(TransactionTestCase):
         client = Client()
         response = client.get('/order/cart',content_type='application/json',**self.header)
         self.assertEqual(response.status_code, 201)
-        print(response.json())
         self.assertEqual(response.json()['message'][0]['title'],'[Roman Ltd] Robin Cross')
