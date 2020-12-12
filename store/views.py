@@ -17,29 +17,29 @@ class ProductListView(View):
         min_price  = request.GET.get('min_price')
         max_price  = request.GET.get('max_price')
         page       = int(request.GET.get('page', 1))
-        
+
         q = Q()
 
         if brands:
             q &= Q(brand__name__in=brands)
-            
+
         if types:
             q &= Q(product_type__name__in=types)
-        
+
         if min_price and max_price:
             q &= Q(market_price__range=(min_price,max_price))
 
         if search:
             q &= Q(brand__name__icontains=search) | Q(product_type__name__icontains=search) | Q(title__icontains=search)
-        
+
         products_list = Product.objects.select_related('product_type').prefetch_related('brand__product_set').filter(q)
-        
+
         page_size = 21
         limit     = page * page_size
         offset    = limit - page_size
         products  = products_list[offset:limit]
 
-        result = []  
+        result = []
 
         for product in products:
             result.append({
@@ -79,10 +79,10 @@ class ProductDetailsView(View):
                 'sale_price'   : product_info.sale_price,
                 'description'  : product_info.description,
                 'product_img'  : product_info.thumnail_url,
-                
+
             })
             return JsonResponse({'result': result}, status=200)
-        
+
         except KeyError:
             return JsonResponse({"message":"KEYERROR"}, status=400)
 
@@ -105,18 +105,17 @@ class Reviews(View):
             return JsonResponse({'message' : 'KEY_ERROR_' + ex.args[0]}, status = 400)
         except Exception as ex:
             return JsonResponse({'message' : 'ERROR_' + ex.args[0]}, status = 400)
-    
-    @login_check
+
     def get(self,request,product_id):
         try:
-            page    = int(request.GET.get('page', 1))
-            reviews_list = Review.objects.order_by('-id').select_related('product','user').filter(product_id=product.id)
-            
+            page      = int(request.GET.get('page', 1))
             page_size = 5
             limit     = page * page_size
             offset    = limit - page_size
-            reviews  = reviews_list[offset:limit]
-            
+
+            reviews_list = Review.objects.order_by('-id').select_related('product','user').filter(product_id=product_id)
+            reviews      = reviews_list[offset:limit]
+
             result = [{
                 'id'         : review.id,
                 'title'      : review.product.title,
@@ -133,23 +132,26 @@ class Reviews(View):
                 'review_list' : result,
                 'total_count' : reviews_list.count()
             },status =200)
-        
+
         except Exception as ex:
             return JsonResponse({'message':'ERROR_' + ex.args[0]}, status = 400)
-    
-    @login_check   
+
+    @login_check
     def delete(self,request,product_id):
         try:
             data = json.loads(request.body)
             user = request.user
+
             del_reivew = Review.objects.filter(id=data['review_id'],user=user )
+
             if not del_reivew.exists():
                 return JsonResponse({'message' : 'INVAILD_REVIEW'}, status = 400)
+
             review = Review.objects.get(id=data['review_id'])
             review.delete()
 
-            return JsonResponse({'message' : 'SUCCESS'}, status = 204)        
-        
+            return JsonResponse({'message' : 'SUCCESS'}, status = 204)
+
         except KeyError as ex:
             return JsonResponse({'message' : 'KEY_ERROR_' + ex.args[0]}, status = 400)
         except Exception as ex:
