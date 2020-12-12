@@ -2,10 +2,10 @@ import sys, os, hmac, base64, requests, time, hashlib, json
 from pytz import timezone
 
 from django.db   import models
-#from django.conf import settings
+from django.conf import settings
 
-#from my_settings import NCP_ACCESS_KEY, NCP_SECRET_KEY, NCP_SERVICE_ID
-#from .api_urls   import SMS_API, SMS_URI
+from my_settings import NCP_ACCESS_KEY, NCP_SECRET_KEY, NCP_SERVICE_ID
+from .api_urls   import SMS_API, SMS_URI
 
 class TimeStampModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
