@@ -1,0 +1,16 @@
+[2021-01-24 18:14:12 +0900] [3633] [INFO] Starting gunicorn 20.0.4
+[2021-01-24 18:14:12 +0900] [3633] [INFO] Listening at: http://0.0.0.0:8000 (3633)
+[2021-01-24 18:14:12 +0900] [3633] [INFO] Using worker: sync
+[2021-01-24 18:14:12 +0900] [3636] [INFO] Booting worker with pid: 3636
+[2021-01-24 18:25:59 +0900] [3636] [INFO] Worker exiting (pid: 3636)
+[2021-01-24 18:26:00 +0900] [4207] [INFO] Booting worker with pid: 4207
+[2021-01-24 18:26:26 +0900] [4229] [INFO] Booting worker with pid: 4229
+[2021-01-24 18:26:38 +0900] [4236] [INFO] Booting worker with pid: 4236
+[2021-01-24 18:27:22 +0900] [4261] [INFO] Booting worker with pid: 4261
+[2021-01-24 18:28:54 +0900] [4319] [INFO] Starting gunicorn 20.0.4
+[2021-01-24 18:28:54 +0900] [4319] [INFO] Listening at: http://0.0.0.0:8000 (4319)
+[2021-01-24 18:28:54 +0900] [4319] [INFO] Using worker: sync
+[2021-01-24 18:28:54 +0900] [4322] [INFO] Booting worker with pid: 4322
+[2021-01-24 18:29:47 +0900] [4319] [INFO] Handling signal: term
+[2021-01-24 18:29:47 +0900] [4322] [INFO] Worker exiting (pid: 4322)
+[2021-01-24 18:29:47 +0900] [4319] [INFO] Shutting down: Master
