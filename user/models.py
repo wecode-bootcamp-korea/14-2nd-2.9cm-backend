@@ -101,7 +101,7 @@ class PhoneAuth(TimeStampModel):
         body = {
             "type"        : "SMS",
             "contentType" : "COMM",
-            "from"        : "01041485117",
+            "from"        : "01028833153",
             "content"     : f'[2.9cm] 인증번호 [{self.auth_number}]를 입력해주세요.',
             "messages"    : [{ "to" : self.phone}]
         }
